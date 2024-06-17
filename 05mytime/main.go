@@ -17,5 +17,7 @@ func main() {
 	createdDate := time.Date(2023, time.December, 04, 12, 12, 12, 0, time.UTC)
 	fmt.Println(createdDate)
 	//This is a created date, year-month(this way particular)-day-hour-minute-second-timezone-utc
+
+	 
 }
 	
