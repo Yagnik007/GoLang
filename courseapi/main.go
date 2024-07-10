@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -14,7 +15,7 @@ import (
 type Course struct {
 	CourseId    string  `json:"courseid"`
 	CourseName  string  `json:"coursename"`
-	CoursePrice int     `json:"price"`
+	CoursePrice int     `json:"-"`
 	Author      *Author `json:"author"`
 }
 
@@ -34,6 +35,24 @@ func (c *Course) Isempty() bool {
 
 func main() {
 	fmt.Println("API")
+	r := mux.NewRouter()
+
+	//Seeding Database
+
+	courses = append(courses, Course{CourseId: "2", CourseName: "Reactjs", CoursePrice: 299, Author: &Author{Fullname: "Yagnik Talaviya", Website: "yagnik.dev"}})
+	courses = append(courses, Course{CourseId: "4", CourseName: "MERN", CoursePrice: 500, Author: &Author{Fullname: "Yagnik Talaviya", Website: "go.dev"}})
+
+	//Routing
+	r.HandleFunc("/", serveHome).Methods("GET")
+	r.HandleFunc("/courses", getAllCourses).Methods("GET")
+	r.HandleFunc("/course/{id}", getOneCourse).Methods("GET")
+	r.HandleFunc("/course", createOneCourse).Methods("POST")
+	r.HandleFunc("/course/{id}", updateOneCourse).Methods("PUT")
+	r.HandleFunc("/course/{id}", deleteOneCourse).Methods("DELETE")
+
+	//Listen
+	log.Fatal(http.ListenAndServe(":5000", r))
+
 }
 
 //controllers
@@ -80,6 +99,13 @@ func createOneCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for _, item := range courses {
+		if course.CourseName == item.CourseName {
+			json.NewEncoder(w).Encode("Course with the same name exists")
+			return
+		}
+	}
+
 	//generate new id -> to string -> append course into courses
 
 	course.CourseId = strconv.Itoa(rand.Intn(1000))
@@ -116,7 +142,7 @@ func deleteOneCourse(w http.ResponseWriter, r *http.Request) {
 	for ind, course := range courses {
 		if course.CourseId == params["id"] {
 			courses = append(courses[:ind], courses[ind+1:]...)
-			json.NewEncoder(w).Encode("Course with id: " + params["id"+" deleted!!"])
+			json.NewEncoder(w).Encode("Course with id: " + params["id"] + " deleted!!")
 			return
 		}
 	}
