@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -36,21 +38,15 @@ func main() {
 
 //controllers
 
-//serve home route
-
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("<h1>Welcome to Courses</h1>"))
 }
-
-//Get all courses
 
 func getAllCourses(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("All the courses")
 	w.Header().Set("Content-type", "application/json")
 	json.NewEncoder(w).Encode(courses)
 }
-
-//Get a course by id
 
 func getOneCourse(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Get one course")
@@ -67,8 +63,6 @@ func getOneCourse(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("No Course Found with id: " + params["id"])
 	return
 }
-
-//create a course
 
 func createOneCourse(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Create one course")
@@ -87,5 +81,45 @@ func createOneCourse(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//generate new id -> to string -> append course into courses
-	
+
+	course.CourseId = strconv.Itoa(rand.Intn(1000))
+	courses = append(courses, course)
+	json.NewEncoder(w).Encode(course)
+	return
+}
+
+func updateOneCourse(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Update one course")
+	w.Header().Set("Content-type", "application/json")
+
+	params := mux.Vars(r)
+
+	for ind, course := range courses {
+		if course.CourseId == params["id"] {
+			courses = append(courses[:ind], courses[ind+1:]...)
+			var course Course
+			_ = json.NewDecoder(r.Body).Decode(&course)
+			course.CourseId = params["id"]
+			courses = append(courses, course)
+			json.NewEncoder(w).Encode(course)
+			return
+		}
+	}
+}
+
+func deleteOneCourse(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Delete One course")
+	w.Header().Set("Content-type", "application/json")
+
+	params := mux.Vars(r)
+
+	for ind, course := range courses {
+		if course.CourseId == params["id"] {
+			courses = append(courses[:ind], courses[ind+1:]...)
+			json.NewEncoder(w).Encode("Course with id: " + params["id"+" deleted!!"])
+			return
+		}
+	}
+	json.NewEncoder(w).Encode("Course with id " + params["id"] + " Not found!!")
+	return
 }
